@@ -1,19 +1,38 @@
 package com.example.gastosya;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
 public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHolder> {
 
-    private List<Gasto> gastos;
+    private final List<Gasto> gastos;
+    private final Map<String, Integer> categoriaIconoMap;
 
     public GastoAdapter(List<Gasto> gastos) {
         this.gastos = gastos;
+        categoriaIconoMap = new HashMap<>();
+
+        categoriaIconoMap.put("Servicio", R.drawable.servicio);
+        categoriaIconoMap.put("Compra", R.drawable.compra);
+        categoriaIconoMap.put("Transacción", R.drawable.transaccion);
+        categoriaIconoMap.put("Alimentacion", R.drawable.alimentacion);
+        categoriaIconoMap.put("Salud", R.drawable.salud);
+        categoriaIconoMap.put("Entretenimiento", R.drawable.entretenimiento);
+        categoriaIconoMap.put("Transporte", R.drawable.transporte);
+        categoriaIconoMap.put("Vivienda", R.drawable.vivienda);
+        categoriaIconoMap.put("Educacion", R.drawable.educacion);
+
+
+
     }
 
     @NonNull
@@ -23,11 +42,19 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         return new GastoViewHolder(view);
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(@NonNull GastoViewHolder holder, int position) {
         Gasto gasto = gastos.get(position);
         holder.tvNombreGasto.setText(gasto.getNombre());
         holder.tvCantidadGasto.setText(String.format("$%.2f", gasto.getCantidad()));
+
+        Integer icono = categoriaIconoMap.get(gasto.getCategoria());
+        if (icono != null) {
+            holder.imgCategoriaGasto.setImageResource(icono);
+        } else {
+            holder.imgCategoriaGasto.setImageResource(R.drawable.predeterminado); // Un icono por defecto
+        }
     }
 
     @Override
@@ -35,13 +62,16 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         return gastos.size();
     }
 
-    public class GastoViewHolder extends RecyclerView.ViewHolder {
+    public static class GastoViewHolder extends RecyclerView.ViewHolder {
         TextView tvNombreGasto, tvCantidadGasto;
+        ImageView imgCategoriaGasto;
+
 
         public GastoViewHolder(@NonNull View itemView) {
             super(itemView);
             tvNombreGasto = itemView.findViewById(R.id.tvNombreGasto);
             tvCantidadGasto = itemView.findViewById(R.id.tvCantidadGasto);
+            imgCategoriaGasto = itemView.findViewById(R.id.imgCategoriaGasto);
         }
     }
 }

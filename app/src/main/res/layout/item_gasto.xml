@@ -5,6 +5,14 @@
     android:orientation="horizontal"
     android:padding="16dp">
 
+    <ImageView
+        android:id="@+id/imgCategoriaGasto"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/iconocategoria"
+        />
+
     <TextView
         android:id="@+id/tvNombreGasto"
         android:layout_width="0dp"

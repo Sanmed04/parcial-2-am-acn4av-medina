@@ -2,6 +2,11 @@
     <string name="app_name">GastosYa</string>
     <string name="gastos_personales">Gastos Personales</string>
     <string name="agregar_gasto">Agregar Gasto</string>
-    <string name="nombre_del_gasto">Nombre del gasto</string>
     <string name="_0_00">$0.00</string>
+    <string name="nombre_del_gasto">Introduzca el nombre</string>
+    <string name="cantidad_del_gasto">Introduzca la cantidad</string>
+    <string name="nombre">Nombre</string>
+    <string name="cantidad">Cantidad</string>
+    <string name="categor_a">Categoría</string>
+    <string name="iconocategoria">iconoCategoria</string>
 </resources>
