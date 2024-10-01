@@ -32,7 +32,17 @@ public class MainActivity extends AppCompatActivity {
         listaGastos = new ArrayList<>();
         RecyclerView recyclerView = findViewById(R.id.recyclerViewGastos);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        gastoAdapter = new GastoAdapter(listaGastos);
+        gastoAdapter = new GastoAdapter(listaGastos, new GastoAdapter.OnGastoClickListener() {
+            @Override
+            public void onGastoClick(Gasto gasto) {
+
+            }
+
+            @Override
+            public void onGastoEliminarClick(int position) {
+                eliminarGasto(position);
+            }
+        });
         recyclerView.setAdapter(gastoAdapter);
 
         spinnerCategoria = findViewById(R.id.spinnerCategoria);
@@ -62,5 +72,13 @@ public class MainActivity extends AppCompatActivity {
         Gasto nuevoGasto = new Gasto(nombre, cantidad, categoria);
         listaGastos.add(nuevoGasto);
         gastoAdapter.notifyDataSetChanged();
+    }
+
+    private void eliminarGasto(int position) {
+        if (position >= 0 && position < listaGastos.size()) {
+            listaGastos.remove(position);
+            gastoAdapter.notifyItemRemoved(position);
+            gastoAdapter.notifyItemRangeChanged(position, listaGastos.size());
+        }
     }
 }

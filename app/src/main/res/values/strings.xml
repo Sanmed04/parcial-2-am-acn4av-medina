@@ -9,4 +9,5 @@
     <string name="cantidad">Cantidad</string>
     <string name="categor_a">Categoría</string>
     <string name="iconocategoria">iconoCategoria</string>
+    <string name="eliminar_gasto">Eliminar gasto </string >
 </resources>

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -15,10 +16,18 @@ import java.util.List;
 public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHolder> {
 
     private final List<Gasto> gastos;
+    private OnGastoClickListener listener;
     private final Map<String, Integer> categoriaIconoMap;
 
-    public GastoAdapter(List<Gasto> gastos) {
+    public interface OnGastoClickListener {
+        void onGastoClick(Gasto gasto);
+
+        void onGastoEliminarClick(int position);
+    }
+
+    public GastoAdapter(List<Gasto> gastos, OnGastoClickListener onGastoClickListener) {
         this.gastos = gastos;
+
         categoriaIconoMap = new HashMap<>();
 
         categoriaIconoMap.put("Servicio", R.drawable.servicio);
@@ -55,6 +64,12 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         } else {
             holder.imgCategoriaGasto.setImageResource(R.drawable.predeterminado); // Un icono por defecto
         }
+
+        holder.btnEliminarGasto.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onGastoEliminarClick(position);
+            }
+        });
     }
 
     @Override
@@ -63,6 +78,7 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
     }
 
     public static class GastoViewHolder extends RecyclerView.ViewHolder {
+        ImageButton btnEliminarGasto;
         TextView tvNombreGasto, tvCantidadGasto;
         ImageView imgCategoriaGasto;
 
@@ -72,6 +88,8 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
             tvNombreGasto = itemView.findViewById(R.id.tvNombreGasto);
             tvCantidadGasto = itemView.findViewById(R.id.tvCantidadGasto);
             imgCategoriaGasto = itemView.findViewById(R.id.imgCategoriaGasto);
+            btnEliminarGasto = itemView.findViewById(R.id.btnEliminarGasto);
+
         }
     }
 }
