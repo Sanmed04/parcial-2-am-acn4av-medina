@@ -10,16 +10,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="@string/nombre_del_gasto"
-        android:textSize="18sp"
-        android:textColor="#000000" />
+        android:textColor="#000000"
+        android:textSize="16sp"/>
 
     <TextView
         android:id="@+id/tvCantidadGasto"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/_0_00"
-        android:textSize="18sp"
-        android:textColor="#000000" />
-
+        android:textColor="#000000"
+        android:textSize="16sp"/>
 </LinearLayout>

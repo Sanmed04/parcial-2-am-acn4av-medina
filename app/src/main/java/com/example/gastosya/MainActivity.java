@@ -1,18 +1,12 @@
 package com.example.gastosya;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
-
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,11 +14,17 @@ public class MainActivity extends AppCompatActivity {
 
     private List<Gasto> listaGastos;
     private GastoAdapter gastoAdapter;
+    private EditText etNombreGasto;
+    private EditText etCantidadGasto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        etNombreGasto = findViewById(R.id.etNombreGasto);
+        etCantidadGasto = findViewById(R.id.etCantidadGasto);
+        Button btnAgregar = findViewById(R.id.btnAgregarGasto);
 
         listaGastos = new ArrayList<>();
         RecyclerView recyclerView = findViewById(R.id.recyclerViewGastos);
@@ -32,17 +32,24 @@ public class MainActivity extends AppCompatActivity {
         gastoAdapter = new GastoAdapter(listaGastos);
         recyclerView.setAdapter(gastoAdapter);
 
-        Button btnAgregarGasto = findViewById(R.id.btnAgregarGasto);
-        btnAgregarGasto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                agregarGasto("Cafe", 4000.00);
+        btnAgregar.setOnClickListener(v -> {
+            String nombre = etNombreGasto.getText().toString();
+            double cantidad;
+
+            try {
+                cantidad = Double.parseDouble(etCantidadGasto.getText().toString());
+                agregarGasto(nombre, cantidad);
+                etNombreGasto.setText("");
+                etCantidadGasto.setText("");
+            } catch (NumberFormatException e) {
+                Toast.makeText(MainActivity.this, "Por favor ingrese una cantidad válida", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void agregarGasto(String nombre, double cantidad) {
-        listaGastos.add(new Gasto(nombre, cantidad));
+        Gasto nuevoGasto = new Gasto(nombre, cantidad);
+        listaGastos.add(nuevoGasto);
         gastoAdapter.notifyDataSetChanged();
     }
 }
