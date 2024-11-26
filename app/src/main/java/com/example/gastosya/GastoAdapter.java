@@ -62,7 +62,7 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         if (icono != null) {
             holder.imgCategoriaGasto.setImageResource(icono);
         } else {
-            holder.imgCategoriaGasto.setImageResource(R.drawable.predeterminado); // Un icono por defecto
+            holder.imgCategoriaGasto.setImageResource(R.drawable.predeterminado);
         }
 
         holder.btnEliminarGasto.setOnClickListener(v -> {

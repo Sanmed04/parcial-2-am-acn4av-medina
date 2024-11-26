@@ -30,14 +30,12 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnResumen = findViewById(R.id.btnResumen);
         btnResumen.setOnClickListener(v -> {
-            // Al hacer clic en el botón Ver Resumen, pasamos la lista de gastos a ResumenActivity
             Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
-            // Convertimos la lista de gastos en un ArrayList de String para pasarlo entre Activities
             ArrayList<String> listaGastosString = new ArrayList<>();
             for (Gasto gasto : listaGastos) {
                 listaGastosString.add(gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
             }
-            intent.putStringArrayListExtra("listaGastos", listaGastosString); // Pasamos los gastos como extra
+            intent.putStringArrayListExtra("listaGastos", listaGastosString);
             startActivity(intent);
         });
 
@@ -51,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         gastoAdapter = new GastoAdapter(listaGastos, new GastoAdapter.OnGastoClickListener() {
             @Override
             public void onGastoClick(Gasto gasto) {
-                // Aquí puedes manejar el click de un gasto si quieres
+
             }
 
             @Override
