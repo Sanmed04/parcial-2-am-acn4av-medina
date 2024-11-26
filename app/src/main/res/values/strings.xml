@@ -10,4 +10,6 @@
     <string name="categor_a">Categoría</string>
     <string name="iconocategoria">iconoCategoria</string>
     <string name="eliminar_gasto">Eliminar gasto </string >
+    <string name="ver_resumen">Ver Resumen</string>
+    <string name="resumen_de_gastos">Resumen de Gastos</string>
 </resources>

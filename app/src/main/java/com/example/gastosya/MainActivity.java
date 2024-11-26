@@ -10,7 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import android.content.Intent;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -19,11 +21,25 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spinnerCategoria;
     private EditText etNombreGasto;
     private EditText etCantidadGasto;
+    private Date fecha;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Button btnResumen = findViewById(R.id.btnResumen);
+        btnResumen.setOnClickListener(v -> {
+            // Al hacer clic en el botón Ver Resumen, pasamos la lista de gastos a ResumenActivity
+            Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
+            // Convertimos la lista de gastos en un ArrayList de String para pasarlo entre Activities
+            ArrayList<String> listaGastosString = new ArrayList<>();
+            for (Gasto gasto : listaGastos) {
+                listaGastosString.add(gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
+            }
+            intent.putStringArrayListExtra("listaGastos", listaGastosString); // Pasamos los gastos como extra
+            startActivity(intent);
+        });
 
         etNombreGasto = findViewById(R.id.etNombreGasto);
         etCantidadGasto = findViewById(R.id.etCantidadGasto);
@@ -35,12 +51,14 @@ public class MainActivity extends AppCompatActivity {
         gastoAdapter = new GastoAdapter(listaGastos, new GastoAdapter.OnGastoClickListener() {
             @Override
             public void onGastoClick(Gasto gasto) {
-
+                // Aquí puedes manejar el click de un gasto si quieres
             }
 
             @Override
             public void onGastoEliminarClick(int position) {
-                eliminarGasto(position);
+                listaGastos.remove(position);
+                gastoAdapter.notifyItemRemoved(position);
+                gastoAdapter.notifyItemRangeChanged(position, listaGastos.size());
             }
         });
         recyclerView.setAdapter(gastoAdapter);
@@ -69,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private void agregarGasto(String nombre, double cantidad) {
         String categoria = spinnerCategoria.getSelectedItem().toString();
 
-        Gasto nuevoGasto = new Gasto(nombre, cantidad, categoria);
+        Gasto nuevoGasto = new Gasto(nombre, cantidad, categoria, fecha);
         listaGastos.add(nuevoGasto);
         gastoAdapter.notifyDataSetChanged();
     }
