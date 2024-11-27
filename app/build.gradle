@@ -29,6 +29,11 @@ android {
 }
 
 dependencies {
+
+    implementation libs.viewpager2
+    implementation libs.fragment.ktx
+    implementation libs.material.v190
+    implementation libs.mpandroidchart
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity

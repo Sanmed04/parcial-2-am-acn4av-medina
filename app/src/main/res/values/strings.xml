@@ -12,4 +12,6 @@
     <string name="eliminar_gasto">Eliminar gasto </string >
     <string name="ver_resumen">Ver Resumen</string>
     <string name="resumen_de_gastos">Resumen de Gastos</string>
+    <string name="home">Home</string>
+    <string name="gr_fico">Gráfico</string>
 </resources>

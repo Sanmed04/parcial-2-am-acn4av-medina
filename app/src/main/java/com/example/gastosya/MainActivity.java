@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import android.content.Intent;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,14 +23,34 @@ public class MainActivity extends AppCompatActivity {
     private EditText etNombreGasto;
     private EditText etCantidadGasto;
     private Date fecha;
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button btnResumen = findViewById(R.id.btnResumen);
-        btnResumen.setOnClickListener(v -> {
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.nav_home) {
+                return true;
+            } else if (item.getItemId() == R.id.nav_graph) {
+
+                Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
+                ArrayList<String> listaGastosString = new ArrayList<>();
+                for (Gasto gasto : listaGastos) {
+                    listaGastosString.add(gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
+                }
+                intent.putStringArrayListExtra("listaGastos", listaGastosString);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+
+        Button btnAgregar = findViewById(R.id.btnAgregarGasto);
+        btnAgregar.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
             ArrayList<String> listaGastosString = new ArrayList<>();
             for (Gasto gasto : listaGastos) {
@@ -41,28 +62,22 @@ public class MainActivity extends AppCompatActivity {
 
         etNombreGasto = findViewById(R.id.etNombreGasto);
         etCantidadGasto = findViewById(R.id.etCantidadGasto);
-        Button btnAgregar = findViewById(R.id.btnAgregarGasto);
+
 
         listaGastos = new ArrayList<>();
         RecyclerView recyclerView = findViewById(R.id.recyclerViewGastos);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        gastoAdapter = new GastoAdapter(listaGastos, new GastoAdapter.OnGastoClickListener() {
+        gastoAdapter = new GastoAdapter(listaGastos, new GastoAdapter.OnItemClickListener() {
             @Override
-            public void onGastoClick(Gasto gasto) {
-
-            }
-
-            @Override
-            public void onGastoEliminarClick(int position) {
-                listaGastos.remove(position);
-                gastoAdapter.notifyItemRemoved(position);
-                gastoAdapter.notifyItemRangeChanged(position, listaGastos.size());
+            public void onEliminarClick(int position) {
+                eliminarGasto(position);
             }
         });
         recyclerView.setAdapter(gastoAdapter);
 
+
         spinnerCategoria = findViewById(R.id.spinnerCategoria);
-        String[] categorias = {"Servicio", "Compra", "Transacción", "Alimentación", "Entretenimiento", "Transporte", "Salud", "Vivienda", "Educación"};
+        String[] categorias = {"Servicio", "Compra", "Transaccion", "Alimentacion", "Entretenimiento", "Transporte", "Salud", "Vivienda", "Educacion"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categorias);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategoria.setAdapter(adapter);
@@ -80,6 +95,28 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Por favor ingrese una cantidad válida", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    protected void onResume() {
+        super.onResume();
+
+        ArrayList<String> listaGastosString = getIntent().getStringArrayListExtra("listaGastos");
+        if (listaGastosString != null && !listaGastosString.isEmpty()) {
+            listaGastos.clear();
+
+            for (String gastoStr : listaGastosString) {
+                String[] partes = gastoStr.split(" - ");
+                String nombre = partes[0];
+                double cantidad = Double.parseDouble(partes[1].replace("$", ""));
+                String categoria = partes[2];
+                Date fecha = new Date();
+
+                Gasto gasto = new Gasto(nombre, cantidad, categoria, fecha);
+                listaGastos.add(gasto);
+            }
+
+            gastoAdapter.notifyDataSetChanged();
+        }
     }
 
     private void agregarGasto(String nombre, double cantidad) {

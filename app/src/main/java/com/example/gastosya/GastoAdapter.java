@@ -1,47 +1,43 @@
 package com.example.gastosya;
 
-import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ImageButton;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHolder> {
 
-    private final List<Gasto> gastos;
-    private OnGastoClickListener listener;
+    private List<Gasto> gastos;
     private final Map<String, Integer> categoriaIconoMap;
+    private OnItemClickListener onItemClickListener;
 
-    public interface OnGastoClickListener {
-        void onGastoClick(Gasto gasto);
-
-        void onGastoEliminarClick(int position);
-    }
-
-    public GastoAdapter(List<Gasto> gastos, OnGastoClickListener onGastoClickListener) {
+    public GastoAdapter(List<Gasto> gastos, OnItemClickListener onItemClickListener) {
         this.gastos = gastos;
+        this.onItemClickListener = onItemClickListener;
 
         categoriaIconoMap = new HashMap<>();
-
         categoriaIconoMap.put("Servicio", R.drawable.servicio);
         categoriaIconoMap.put("Compra", R.drawable.compra);
-        categoriaIconoMap.put("Transacción", R.drawable.transaccion);
+        categoriaIconoMap.put("Transaccion", R.drawable.transaccion);
         categoriaIconoMap.put("Alimentacion", R.drawable.alimentacion);
         categoriaIconoMap.put("Salud", R.drawable.salud);
         categoriaIconoMap.put("Entretenimiento", R.drawable.entretenimiento);
         categoriaIconoMap.put("Transporte", R.drawable.transporte);
         categoriaIconoMap.put("Vivienda", R.drawable.vivienda);
         categoriaIconoMap.put("Educacion", R.drawable.educacion);
+    }
 
-
-
+    public void updateData(List<Gasto> nuevosGastos) {
+        this.gastos = nuevosGastos;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -51,7 +47,6 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         return new GastoViewHolder(view);
     }
 
-    @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(@NonNull GastoViewHolder holder, int position) {
         Gasto gasto = gastos.get(position);
@@ -66,8 +61,8 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         }
 
         holder.btnEliminarGasto.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onGastoEliminarClick(position);
+            if (onItemClickListener != null) {
+                onItemClickListener.onEliminarClick(position);
             }
         });
     }
@@ -78,10 +73,9 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
     }
 
     public static class GastoViewHolder extends RecyclerView.ViewHolder {
-        ImageButton btnEliminarGasto;
         TextView tvNombreGasto, tvCantidadGasto;
         ImageView imgCategoriaGasto;
-
+        ImageButton btnEliminarGasto;
 
         public GastoViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -89,7 +83,10 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
             tvCantidadGasto = itemView.findViewById(R.id.tvCantidadGasto);
             imgCategoriaGasto = itemView.findViewById(R.id.imgCategoriaGasto);
             btnEliminarGasto = itemView.findViewById(R.id.btnEliminarGasto);
-
         }
+    }
+
+    public interface OnItemClickListener {
+        void onEliminarClick(int position);
     }
 }

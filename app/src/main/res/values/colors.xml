@@ -3,5 +3,14 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
-
+    <color name="colorOne">#EF9C66</color>
+    <color name="colorTwo">#FCDC94</color>
+    <color name="colorThree">#C8CFA0</color>
+    <color name="colorFour">#78ABA8</color>
+    <color name="colorFive">#FF2929</color>
+    <color name="colorSix">#3D3BF3</color>
+    <color name="colorSeven">#9694FF</color>
+    <color name="colorEight">#399918</color>
+    <color name="colorNine">#257180</color>
+    <color name="colorBg">#EE4E4E</color>
 </resources>
