@@ -14,6 +14,10 @@ import java.util.Date;
 import java.util.List;
 import android.content.Intent;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,7 +40,6 @@ public class MainActivity extends AppCompatActivity {
             if (item.getItemId() == R.id.nav_home) {
                 return true;
             } else if (item.getItemId() == R.id.nav_graph) {
-
                 Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
                 ArrayList<String> listaGastosString = new ArrayList<>();
                 for (Gasto gasto : listaGastos) {
@@ -50,19 +53,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         Button btnAgregar = findViewById(R.id.btnAgregarGasto);
-        btnAgregar.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
-            ArrayList<String> listaGastosString = new ArrayList<>();
-            for (Gasto gasto : listaGastos) {
-                listaGastosString.add(gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
-            }
-            intent.putStringArrayListExtra("listaGastos", listaGastosString);
-            startActivity(intent);
-        });
 
         etNombreGasto = findViewById(R.id.etNombreGasto);
         etCantidadGasto = findViewById(R.id.etCantidadGasto);
-
 
         listaGastos = new ArrayList<>();
         RecyclerView recyclerView = findViewById(R.id.recyclerViewGastos);
@@ -74,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         recyclerView.setAdapter(gastoAdapter);
-
 
         spinnerCategoria = findViewById(R.id.spinnerCategoria);
         String[] categorias = {"Servicio", "Compra", "Transaccion", "Alimentacion", "Entretenimiento", "Transporte", "Salud", "Vivienda", "Educacion"};
@@ -95,36 +87,44 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Por favor ingrese una cantidad válida", Toast.LENGTH_SHORT).show();
             }
         });
+
+        fecha = new Date();
     }
 
     protected void onResume() {
         super.onResume();
-
         ArrayList<String> listaGastosString = getIntent().getStringArrayListExtra("listaGastos");
         if (listaGastosString != null && !listaGastosString.isEmpty()) {
             listaGastos.clear();
-
             for (String gastoStr : listaGastosString) {
                 String[] partes = gastoStr.split(" - ");
                 String nombre = partes[0];
                 double cantidad = Double.parseDouble(partes[1].replace("$", ""));
                 String categoria = partes[2];
                 Date fecha = new Date();
-
                 Gasto gasto = new Gasto(nombre, cantidad, categoria, fecha);
                 listaGastos.add(gasto);
             }
-
             gastoAdapter.notifyDataSetChanged();
         }
     }
 
     private void agregarGasto(String nombre, double cantidad) {
         String categoria = spinnerCategoria.getSelectedItem().toString();
-
-        Gasto nuevoGasto = new Gasto(nombre, cantidad, categoria, fecha);
+        Gasto nuevoGasto = new Gasto(nombre, cantidad, categoria, new Date());
         listaGastos.add(nuevoGasto);
         gastoAdapter.notifyDataSetChanged();
+
+        LayoutInflater inflater = getLayoutInflater();
+        View toastLayout = inflater.inflate(R.layout.custom_toast, null);
+        TextView textView = toastLayout.findViewById(R.id.toast_text);
+        textView.setText("Gasto agregado");
+
+        Toast toast = new Toast(getApplicationContext());
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 100);
+        toast.setView(toastLayout);
+        toast.show();
     }
 
     private void eliminarGasto(int position) {
