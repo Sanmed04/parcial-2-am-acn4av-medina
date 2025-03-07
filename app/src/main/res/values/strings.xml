@@ -14,4 +14,5 @@
     <string name="resumen_de_gastos">Resumen de Gastos</string>
     <string name="home">Home</string>
     <string name="gr_fico">Gráfico</string>
+    <string name="total_mes_actual_0_00">Total (mes actual): $0.00</string>
 </resources>
