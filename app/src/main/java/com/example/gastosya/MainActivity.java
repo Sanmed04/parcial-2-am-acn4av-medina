@@ -132,6 +132,19 @@ public class MainActivity extends AppCompatActivity {
             listaGastos.remove(position);
             gastoAdapter.notifyItemRemoved(position);
             gastoAdapter.notifyItemRangeChanged(position, listaGastos.size());
+
+            // Crear Toast personalizado para eliminación
+            LayoutInflater inflater = getLayoutInflater();
+            View toastLayout = inflater.inflate(R.layout.custom_toast, null);
+            TextView textView = toastLayout.findViewById(R.id.toast_text);
+            textView.setText("Gasto eliminado");
+
+            Toast toast = new Toast(getApplicationContext());
+            toast.setDuration(Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 100);
+            toast.setView(toastLayout);
+            toastLayout.setBackgroundResource(R.drawable.toast_background_delete);
+            toast.show();
         }
     }
 }
