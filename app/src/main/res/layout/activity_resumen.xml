@@ -39,7 +39,7 @@
         android:layout_height="wrap_content"
         android:paddingTop="16dp"
         android:paddingBottom="8dp"
-        android:text="Total (mes actual): $0.00"
+        android:text="@string/total_mes_actual_0_00"
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="20sp"
