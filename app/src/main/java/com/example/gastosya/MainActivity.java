@@ -1,5 +1,9 @@
 package com.example.gastosya;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -18,6 +22,9 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,11 +35,18 @@ public class MainActivity extends AppCompatActivity {
     private EditText etCantidadGasto;
     private Date fecha;
     private BottomNavigationView bottomNavigationView;
+    private static final String CHANNEL_ID = "GastosYaChannel";
+    private static final double LIMITE_GASTOS = 500.0; // Límite hardcodeado por ahora
+    private static final int NOTIFICATION_ID = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Crear canal de notificaciones
+        createNotificationChannel();
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
@@ -91,6 +105,18 @@ public class MainActivity extends AppCompatActivity {
         fecha = new Date();
     }
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "GastosYa Notifications";
+            String description = "Notificaciones para exceso de gastos";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
     protected void onResume() {
         super.onResume();
         ArrayList<String> listaGastosString = getIntent().getStringArrayListExtra("listaGastos");
@@ -125,6 +151,41 @@ public class MainActivity extends AppCompatActivity {
         toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 100);
         toast.setView(toastLayout);
         toast.show();
+
+        // Verificar si se superó el límite y enviar notificación
+        double totalGastos = calcularTotalGastos();
+        if (totalGastos > LIMITE_GASTOS) {
+            enviarNotificacion(totalGastos);
+        }
+    }
+
+    private double calcularTotalGastos() {
+        double total = 0;
+        for (Gasto gasto : listaGastos) {
+            total += gasto.getCantidad();
+        }
+        return total;
+    }
+
+    private void enviarNotificacion(double totalGastos) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification) // Necesitarás un ícono en res/drawable
+                .setContentTitle("Límite de gastos superado")
+                .setContentText("Has gastado $" + String.format("%.2f", totalGastos) + ", superando el límite de $" + LIMITE_GASTOS)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+        // Verificar permiso en Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
+                return;
+            }
+        }
+
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
     }
 
     private void eliminarGasto(int position) {
