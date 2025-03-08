@@ -1,6 +1,5 @@
 package com.example.gastosya;
 
-import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.pm.PackageManager;
@@ -18,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,9 +25,7 @@ import java.util.List;
 import java.util.Map;
 import android.content.Intent;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.Source;
-
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int NOTIFICATION_ID = 1;
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
-    private double limiteGastos = 500.0; // Valor por defecto hasta que se cargue de Firestore
+    private double limiteGastos = 500.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,17 +57,14 @@ public class MainActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // Verificar si el usuario está autenticado, si no, volver a LoginActivity
         if (mAuth.getCurrentUser() == null) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
         }
 
-
-
-        // Cargar límite desde Firestore
         cargarLimiteDesdeFirestore();
+        cargarGastosDesdeFirestore();
 
         createNotificationChannel();
 
@@ -126,9 +121,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnConfig.setOnClickListener(v -> mostrarDialogoConfiguracion());
+        btnConfig.setOnClickListener(v -> {
+            ConfigurarLimiteDialogFragment dialog = new ConfigurarLimiteDialogFragment();
+            dialog.show(getSupportFragmentManager(), "ConfigurarLimiteDialog");
+        });
 
         fecha = new Date();
+    }
+
+    public double getLimiteGastos() {
+        return limiteGastos;
+    }
+
+    public void setLimiteGastos(double limite) {
+        this.limiteGastos = limite;
     }
 
     private void createNotificationChannel() {
@@ -153,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
         String userId = mAuth.getCurrentUser().getUid();
         Log.d("GastosYa", "Intentando cargar límite para usuario: " + userId);
 
-        db.collection("users").document(userId).get(Source.DEFAULT) // Usar fuente por defecto (cache o servidor)
+        db.collection("users").document(userId).get(Source.DEFAULT)
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         Double limite = documentSnapshot.getDouble("limiteGastos");
@@ -175,48 +181,72 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void guardarLimiteEnFirestore(double nuevoLimite) {
+    private void cargarGastosDesdeFirestore() {
+        if (mAuth.getCurrentUser() == null) {
+            Log.e("GastosYa", "No hay usuario autenticado para cargar gastos");
+            return;
+        }
+
         String userId = mAuth.getCurrentUser().getUid();
-        Map<String, Object> userData = new HashMap<>();
-        userData.put("limiteGastos", nuevoLimite);
-        db.collection("users").document(userId).set(userData)
-                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Límite actualizado a $" + nuevoLimite, Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(this, "Error al guardar límite: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        Log.d("GastosYa", "Intentando cargar gastos para usuario: " + userId);
+
+        db.collection("users").document(userId).collection("gastos")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    listaGastos.clear();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots) {
+                        String id = doc.getId(); // Obtener el ID del documento
+                        String nombre = doc.getString("nombre");
+                        Double cantidad = doc.getDouble("cantidad");
+                        String categoria = doc.getString("categoria");
+                        Date fecha = doc.getDate("fecha");
+                        if (nombre != null && cantidad != null && categoria != null && fecha != null) {
+                            Gasto gasto = new Gasto(id, nombre, cantidad, categoria, fecha); // Usar constructor con ID
+                            listaGastos.add(gasto);
+                        }
+                    }
+                    gastoAdapter.notifyDataSetChanged();
+                    Log.d("GastosYa", "Gastos cargados desde Firestore: " + listaGastos.size());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("GastosYa", "Error al cargar gastos: " + e.getMessage() + " | UserID: " + userId);
+                    Toast.makeText(this, "Error al cargar gastos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
-    private void mostrarDialogoConfiguracion() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Configurar Límite de Gastos");
+    public void guardarLimiteEnFirestore(double nuevoLimite) {
+        if (mAuth.getCurrentUser() == null) {
+            Log.e("GastosYa", "No hay usuario autenticado para guardar el límite");
+            Toast.makeText(this, "Error: No estás autenticado", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        final EditText input = new EditText(this);
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        input.setHint("Ingrese el límite (e.g., 500.0)");
-        input.setText(String.valueOf(limiteGastos));
-        builder.setView(input);
+        String userId = mAuth.getCurrentUser().getUid();
+        Log.d("GastosYa", "Guardando límite: " + nuevoLimite + " para usuario: " + userId);
 
-        builder.setPositiveButton("Guardar", (dialog, which) -> {
-            try {
-                double nuevoLimite = Double.parseDouble(input.getText().toString());
-                if (nuevoLimite <= 0) {
-                    Toast.makeText(this, "El límite debe ser mayor a 0", Toast.LENGTH_SHORT).show();
-                } else {
-                    limiteGastos = nuevoLimite;
-                    guardarLimiteEnFirestore(nuevoLimite);
-                }
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, "Por favor ingrese un valor válido", Toast.LENGTH_SHORT).show();
-            }
-        });
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("limiteGastos", nuevoLimite);
 
-        builder.setNegativeButton("Cancelar", (dialog, which) -> dialog.cancel());
-        builder.show();
+        db.collection("users").document(userId)
+                .set(userData, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("GastosYa", "Límite guardado exitosamente en Firestore: " + nuevoLimite);
+                    Toast.makeText(this, "Límite actualizado a $" + nuevoLimite, Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("GastosYa", "Error al guardar límite en Firestore: " + e.getMessage());
+                    Toast.makeText(this, "Error al guardar límite: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
     private void agregarGasto(String nombre, double cantidad) {
         String categoria = spinnerCategoria.getSelectedItem().toString();
-        Gasto nuevoGasto = new Gasto(nombre, cantidad, categoria, new Date());
+        Date fechaActual = new Date();
+        Gasto nuevoGasto = new Gasto(nombre, cantidad, categoria, fechaActual);
         listaGastos.add(nuevoGasto);
         gastoAdapter.notifyDataSetChanged();
+
+        guardarGastoEnFirestore(nuevoGasto);
 
         LayoutInflater inflater = getLayoutInflater();
         View toastLayout = inflater.inflate(R.layout.custom_toast, null);
@@ -232,6 +262,33 @@ public class MainActivity extends AppCompatActivity {
         if (totalGastos > limiteGastos) {
             enviarNotificacion(totalGastos);
         }
+    }
+
+    private void guardarGastoEnFirestore(Gasto gasto) {
+        if (mAuth.getCurrentUser() == null) {
+            Log.e("GastosYa", "No hay usuario autenticado para guardar el gasto");
+            Toast.makeText(this, "Error: No estás autenticado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String userId = mAuth.getCurrentUser().getUid();
+        Map<String, Object> gastoData = new HashMap<>();
+        gastoData.put("nombre", gasto.getNombre());
+        gastoData.put("cantidad", gasto.getCantidad());
+        gastoData.put("categoria", gasto.getCategoria());
+        gastoData.put("fecha", gasto.getFecha());
+
+        db.collection("users").document(userId).collection("gastos")
+                .add(gastoData)
+                .addOnSuccessListener(documentReference -> {
+                    // Asignar el ID generado al objeto Gasto
+                    gasto.setId(documentReference.getId());
+                    Log.d("GastosYa", "Gasto guardado en Firestore con ID: " + documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("GastosYa", "Error al guardar gasto en Firestore: " + e.getMessage());
+                    Toast.makeText(this, "Error al guardar gasto: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
     private double calcularTotalGastos() {
@@ -262,6 +319,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void eliminarGasto(int position) {
         if (position >= 0 && position < listaGastos.size()) {
+            Gasto gastoEliminado = listaGastos.get(position);
+            String gastoId = gastoEliminado.getId();
+
+            if (gastoId != null && mAuth.getCurrentUser() != null) {
+                String userId = mAuth.getCurrentUser().getUid();
+                db.collection("users").document(userId).collection("gastos").document(gastoId)
+                        .delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("GastosYa", "Gasto eliminado de Firestore con ID: " + gastoId);
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("GastosYa", "Error al eliminar gasto de Firestore: " + e.getMessage());
+                            Toast.makeText(this, "Error al eliminar gasto: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
+            }
+
             listaGastos.remove(position);
             gastoAdapter.notifyItemRemoved(position);
             gastoAdapter.notifyItemRangeChanged(position, listaGastos.size());

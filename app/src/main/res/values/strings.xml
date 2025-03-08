@@ -24,4 +24,10 @@
     <string name="credenciales_incorrectas">Credenciales incorrectas</string>
     <string name="por_favor_complete_todos_los_campos">Por favor, complete todos los campos</string>
     <string name="ultimos_gastos">Ultimos gastos</string>
+    <string name="guardar">Guardar</string>
+    <string name="l_mite_mensual">Límite mensual ($)</string>
+    <string name="configurar_l_mite_mensual_de_gastos">Configurar Límite Mensual de Gastos</string>
+    <string name="email1">Email</string>
+    <string name="contrase_a1">Contraseña</string>
+    <string name="_2025_gastosya_todos_los_derechos_reservados">© 2025 GastosYa. Todos los derechos reservados.</string>
 </resources>

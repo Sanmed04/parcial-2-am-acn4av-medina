@@ -106,10 +106,9 @@ public class ResumenActivity extends AppCompatActivity {
             gastos.remove(position);
             gastoAdapter.notifyItemRemoved(position);
             gastoAdapter.notifyItemRangeChanged(position, gastos.size());
-            mostrarGraficoPorCategoria(); // Actualizar gráfico
-            mostrarTotalGastos(); // Actualizar total
+            mostrarGraficoPorCategoria();
+            mostrarTotalGastos();
 
-            // Crear Toast personalizado para eliminación
             LayoutInflater inflater = getLayoutInflater();
             View toastLayout = inflater.inflate(R.layout.custom_toast, null);
             TextView textView = toastLayout.findViewById(R.id.toast_text);
@@ -117,9 +116,9 @@ public class ResumenActivity extends AppCompatActivity {
 
             Toast toast = new Toast(getApplicationContext());
             toast.setDuration(Toast.LENGTH_SHORT);
-            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 100); // Parte superior
+            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 100);
             toast.setView(toastLayout);
-            toastLayout.setBackgroundResource(R.drawable.toast_background_delete); // Fondo rojo
+            toastLayout.setBackgroundResource(R.drawable.toast_background_delete);
             toast.show();
         }
     }
