@@ -23,4 +23,5 @@
     <string name="gastosya">GastosYa</string>
     <string name="credenciales_incorrectas">Credenciales incorrectas</string>
     <string name="por_favor_complete_todos_los_campos">Por favor, complete todos los campos</string>
+    <string name="ultimos_gastos">Ultimos gastos</string>
 </resources>
