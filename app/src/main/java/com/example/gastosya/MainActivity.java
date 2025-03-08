@@ -6,6 +6,9 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,7 +31,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.Source;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.TextView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -108,6 +110,14 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategoria.setAdapter(adapter);
 
+        // Cerrar teclado al tocar el Spinner
+        spinnerCategoria.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                hideKeyboard();
+            }
+            return false; // Permitir que el Spinner siga funcionando normalmente
+        });
+
         btnAgregar.setOnClickListener(v -> {
             String nombre = etNombreGasto.getText().toString();
             double cantidad;
@@ -127,6 +137,23 @@ public class MainActivity extends AppCompatActivity {
         });
 
         fecha = new Date();
+
+        // Cerrar teclado al tocar fuera del EditText
+        View rootView = findViewById(android.R.id.content);
+        rootView.setOnTouchListener((v, event) -> {
+            hideKeyboard();
+            return false; // Permitir que otros eventos se procesen
+        });
+    }
+
+    // Método para ocultar el teclado
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        View view = getCurrentFocus();
+        if (view == null) {
+            view = new View(this);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     public double getLimiteGastos() {
@@ -195,13 +222,13 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     listaGastos.clear();
                     for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots) {
-                        String id = doc.getId(); // Obtener el ID del documento
+                        String id = doc.getId();
                         String nombre = doc.getString("nombre");
                         Double cantidad = doc.getDouble("cantidad");
                         String categoria = doc.getString("categoria");
                         Date fecha = doc.getDate("fecha");
                         if (nombre != null && cantidad != null && categoria != null && fecha != null) {
-                            Gasto gasto = new Gasto(id, nombre, cantidad, categoria, fecha); // Usar constructor con ID
+                            Gasto gasto = new Gasto(id, nombre, cantidad, categoria, fecha);
                             listaGastos.add(gasto);
                         }
                     }
@@ -281,7 +308,6 @@ public class MainActivity extends AppCompatActivity {
         db.collection("users").document(userId).collection("gastos")
                 .add(gastoData)
                 .addOnSuccessListener(documentReference -> {
-                    // Asignar el ID generado al objeto Gasto
                     gasto.setId(documentReference.getId());
                     Log.d("GastosYa", "Gasto guardado en Firestore con ID: " + documentReference.getId());
                 })
