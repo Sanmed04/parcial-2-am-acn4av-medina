@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
                 ArrayList<String> listaGastosString = new ArrayList<>();
                 for (Gasto gasto : listaGastos) {
-                    listaGastosString.add(gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
+                    listaGastosString.add(gasto.getId() + " - " + gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
                 }
                 intent.putStringArrayListExtra("listaGastos", listaGastosString);
                 startActivity(intent);
@@ -110,12 +110,11 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategoria.setAdapter(adapter);
 
-        // Cerrar teclado al tocar el Spinner
         spinnerCategoria.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 hideKeyboard();
             }
-            return false; // Permitir que el Spinner siga funcionando normalmente
+            return false;
         });
 
         btnAgregar.setOnClickListener(v -> {
@@ -138,11 +137,11 @@ public class MainActivity extends AppCompatActivity {
 
         fecha = new Date();
 
-        // Cerrar teclado al tocar fuera del EditText
+
         View rootView = findViewById(android.R.id.content);
         rootView.setOnTouchListener((v, event) -> {
             hideKeyboard();
-            return false; // Permitir que otros eventos se procesen
+            return false;
         });
     }
 
@@ -385,13 +384,25 @@ public class MainActivity extends AppCompatActivity {
         if (listaGastosString != null && !listaGastosString.isEmpty()) {
             listaGastos.clear();
             for (String gastoStr : listaGastosString) {
-                String[] partes = gastoStr.split(" - ");
-                String nombre = partes[0];
-                double cantidad = Double.parseDouble(partes[1].replace("$", ""));
-                String categoria = partes[2];
-                Date fecha = new Date();
-                Gasto gasto = new Gasto(nombre, cantidad, categoria, fecha);
-                listaGastos.add(gasto);
+                try {
+                    String[] partes = gastoStr.split(" - ");
+                    if (partes.length != 4) {
+                        Log.e("GastosYa", "Formato inválido en gastoStr: " + gastoStr);
+                        continue; // Saltar este elemento si el formato es incorrecto
+                    }
+                    String id = partes[0];
+                    String nombre = partes[1];
+                    String cantidadStr = partes[2].replace("$", "");
+                    double cantidad = Double.parseDouble(cantidadStr);
+                    String categoria = partes[3];
+                    Date fecha = new Date();
+                    Gasto gasto = new Gasto(id, nombre, cantidad, categoria, fecha);
+                    listaGastos.add(gasto);
+                } catch (NumberFormatException e) {
+                    Log.e("GastosYa", "Error parseando cantidad en gastoStr: " + gastoStr + " | " + e.getMessage());
+                } catch (Exception e) {
+                    Log.e("GastosYa", "Error procesando gastoStr: " + gastoStr + " | " + e.getMessage());
+                }
             }
             gastoAdapter.notifyDataSetChanged();
         }

@@ -13,10 +13,12 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,11 +37,13 @@ public class ResumenActivity extends AppCompatActivity {
     private RecyclerView recyclerViewResumen;
     private GastoAdapter gastoAdapter;
     private PieChart pieChart;
+    private TextView tvNoGastos;
     private List<Gasto> gastos = new ArrayList<>();
     private List<String> categorias;
     private BottomNavigationView bottomNavigationView;
-
     private TextView tvTotalGastos;
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -47,18 +51,25 @@ public class ResumenActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_resumen);
 
+        db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        recyclerViewResumen = findViewById(R.id.recyclerViewResumen);
+        pieChart = findViewById(R.id.pieChart);
+        tvTotalGastos = findViewById(R.id.tvTotalGastos);
+        tvNoGastos = findViewById(R.id.tvNoGastos);
+
         bottomNavigationView.setSelectedItemId(R.id.nav_graph);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.nav_home) {
                 Intent intent = new Intent(ResumenActivity.this, MainActivity.class);
-
                 ArrayList<String> listaGastosString = new ArrayList<>();
                 for (Gasto gasto : gastos) {
-                    listaGastosString.add(gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
+                    String id = gasto.getId() != null ? gasto.getId() : ""; // Asegurar que id no sea null
+                    listaGastosString.add(id + " - " + gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
                 }
-
                 intent.putStringArrayListExtra("listaGastos", listaGastosString);
                 startActivity(intent);
                 return true;
@@ -70,44 +81,79 @@ public class ResumenActivity extends AppCompatActivity {
 
         ArrayList<String> listaGastosString = getIntent().getStringArrayListExtra("listaGastos");
 
-        if (listaGastosString != null && !listaGastosString.isEmpty()) {
-            for (String gastoStr : listaGastosString) {
-                String[] partes = gastoStr.split(" - ");
-                String nombre = partes[0];
-                double cantidad = Double.parseDouble(partes[1].replace("$", ""));
-                String categoria = partes[2];
-                Date fecha = new Date();
+        recyclerViewResumen.setLayoutManager(new LinearLayoutManager(this));
+        gastoAdapter = new GastoAdapter(gastos, new GastoAdapter.OnItemClickListener() {
+            @Override
+            public void onEliminarClick(int position) {
+                eliminarGasto(position);
+            }
+        });
+        recyclerViewResumen.setAdapter(gastoAdapter);
 
-                Gasto gasto = new Gasto(nombre, cantidad, categoria, fecha);
-                gastos.add(gasto);
+        if (listaGastosString == null || listaGastosString.isEmpty()) {
+            pieChart.setVisibility(View.GONE);
+            tvNoGastos.setVisibility(View.VISIBLE);
+            tvTotalGastos.setText("Total " + getMesActual() + ": $0.00");
+        } else {
+            pieChart.setVisibility(View.VISIBLE);
+            tvNoGastos.setVisibility(View.GONE);
+
+            gastos.clear(); // Limpiar la lista antes de cargar nuevos datos
+            for (String gastoStr : listaGastosString) {
+                try {
+                    String[] partes = gastoStr.split(" - ");
+                    if (partes.length != 4) {
+                        Log.e("GastosYa", "Formato inválido en gastoStr: " + gastoStr);
+                        continue; // Saltar este elemento si el formato es incorrecto
+                    }
+                    String id = partes[0];
+                    String nombre = partes[1];
+                    String cantidadStr = partes[2].replace("$", "");
+                    double cantidad = Double.parseDouble(cantidadStr);
+                    String categoria = partes[3];
+                    Date fecha = new Date();
+                    Gasto gasto = new Gasto(id, nombre, cantidad, categoria, fecha);
+                    gastos.add(gasto);
+                } catch (Exception e) {
+                    Log.e("GastosYa", "Error procesando gastoStr: " + gastoStr + " | " + e.getMessage());
+                }
             }
 
-            recyclerViewResumen = findViewById(R.id.recyclerViewResumen);
-            recyclerViewResumen.setLayoutManager(new LinearLayoutManager(this));
-            gastoAdapter = new GastoAdapter(gastos, new GastoAdapter.OnItemClickListener() {
-                @Override
-                public void onEliminarClick(int position) {
-                    eliminarGasto(position);
-                }
-            });
-            recyclerViewResumen.setAdapter(gastoAdapter);
-
-
-            tvTotalGastos = findViewById(R.id.tvTotalGastos);
-
             mostrarTotalGastos();
-
             mostrarGraficoPorCategoria();
         }
     }
 
     private void eliminarGasto(int position) {
         if (position >= 0 && position < gastos.size()) {
+            Gasto gastoEliminado = gastos.get(position);
+            String gastoId = gastoEliminado.getId();
+
+            if (gastoId != null && mAuth.getCurrentUser() != null) {
+                String userId = mAuth.getCurrentUser().getUid();
+                db.collection("users").document(userId).collection("gastos").document(gastoId)
+                        .delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("GastosYa", "Gasto eliminado de Firestore con ID: " + gastoId);
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("GastosYa", "Error al eliminar gasto de Firestore: " + e.getMessage());
+                            Toast.makeText(this, "Error al eliminar gasto: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
+            }
+
             gastos.remove(position);
             gastoAdapter.notifyItemRemoved(position);
             gastoAdapter.notifyItemRangeChanged(position, gastos.size());
-            mostrarGraficoPorCategoria();
-            mostrarTotalGastos();
+
+            if (gastos.isEmpty()) {
+                pieChart.setVisibility(View.GONE);
+                tvNoGastos.setVisibility(View.VISIBLE);
+                tvTotalGastos.setText("Total " + getMesActual() + ": $0.00");
+            } else {
+                mostrarGraficoPorCategoria();
+                mostrarTotalGastos();
+            }
 
             LayoutInflater inflater = getLayoutInflater();
             View toastLayout = inflater.inflate(R.layout.custom_toast, null);
@@ -165,7 +211,6 @@ public class ResumenActivity extends AppCompatActivity {
         });
 
         PieData pieData = new PieData(dataSet);
-        pieChart = findViewById(R.id.pieChart);
         pieChart.setData(pieData);
         pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
@@ -204,11 +249,12 @@ public class ResumenActivity extends AppCompatActivity {
             totalGastos += gasto.getCantidad();
         }
 
+        tvTotalGastos.setText("Total " + getMesActual() + ": $" + String.format(Locale.getDefault(), "%.2f", totalGastos));
+    }
+
+    private String getMesActual() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM", Locale.getDefault());
         String mesActual = dateFormat.format(Calendar.getInstance().getTime());
-
-        mesActual = mesActual.substring(0, 1).toUpperCase() + mesActual.substring(1).toLowerCase();
-
-        tvTotalGastos.setText("Total " + mesActual + ": $" + String.format(Locale.getDefault(), "%.2f", totalGastos));
+        return mesActual.substring(0, 1).toUpperCase() + mesActual.substring(1).toLowerCase();
     }
 }
