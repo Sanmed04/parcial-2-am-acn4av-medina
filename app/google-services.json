@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "926347185774",
+    "project_id": "gastosya-65de0",
+    "storage_bucket": "gastosya-65de0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:926347185774:android:e351b3eef855e2fce5607f",
+        "android_client_info": {
+          "package_name": "com.example.gastosya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD-VXpWRMkUXlhafp-BCwroxSvgN0A87Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

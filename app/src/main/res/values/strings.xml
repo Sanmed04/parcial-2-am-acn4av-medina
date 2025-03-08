@@ -15,4 +15,12 @@
     <string name="home">Home</string>
     <string name="gr_fico">Gráfico</string>
     <string name="total_mes_actual_0_00">Total (mes actual): $0.00</string>
+    <string name="configurar_limite">Configurar límite de gastos</string>
+    <string name="contrase_a">Contraseña</string>
+    <string name="iniciar_sesi_n">Iniciar Sesión</string>
+    <string name="email">Email</string>
+    <string name="controla_tus_finanzas_f_cilmente">Controla tus finanzas fácilmente</string>
+    <string name="gastosya">GastosYa</string>
+    <string name="credenciales_incorrectas">Credenciales incorrectas</string>
+    <string name="por_favor_complete_todos_los_campos">Por favor, complete todos los campos</string>
 </resources>
