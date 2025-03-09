@@ -13,7 +13,6 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
-import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import android.util.Log;
@@ -227,7 +226,6 @@ public class ResumenActivity extends AppCompatActivity {
             entries.add(new PieEntry((float) total));
             categorias.add(categoria);
 
-            // Depuración
             Log.d("GastosYa", "Categoría procesada: " + categoria);
 
             Integer color = categoriaColorMap.get(categoria);

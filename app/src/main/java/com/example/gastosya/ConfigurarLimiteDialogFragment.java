@@ -25,23 +25,23 @@ public class ConfigurarLimiteDialogFragment extends DialogFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        TextInputEditText etLimiteGasto = view.findViewById(R.id.etLimiteGasto);
+        TextInputEditText setLimiteGasto = view.findViewById(R.id.setLimiteGasto);
         MaterialButton btnGuardarLimite = view.findViewById(R.id.btnGuardarLimite);
 
-        if (etLimiteGasto == null || btnGuardarLimite == null) {
+        if (setLimiteGasto == null || btnGuardarLimite == null) {
             Toast.makeText(getActivity(), "Error al cargar el diálogo", Toast.LENGTH_SHORT).show();
             dismiss();
             return;
         }
 
         if (getActivity() instanceof MainActivity) {
-            etLimiteGasto.setText(String.valueOf(((MainActivity) getActivity()).getLimiteGastos()));
+            setLimiteGasto.setText(String.valueOf(((MainActivity) getActivity()).getLimiteGastos()));
         }
 
         btnGuardarLimite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String limiteStr = etLimiteGasto.getText().toString();
+                String limiteStr = setLimiteGasto.getText().toString();
                 if (!limiteStr.isEmpty()) {
                     try {
                         double nuevoLimite = Double.parseDouble(limiteStr);

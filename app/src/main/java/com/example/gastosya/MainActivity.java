@@ -1,5 +1,6 @@
 package com.example.gastosya;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.pm.PackageManager;
@@ -41,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Gasto> listaGastos;
     private GastoAdapter gastoAdapter;
     private Spinner spinnerCategoria;
-    private EditText etNombreGasto;
-    private EditText etCantidadGasto;
+    private EditText setNombreGasto;
+    private EditText setCantidadGasto;
     private Date fecha;
     private BottomNavigationView bottomNavigationView;
     private static final String CHANNEL_ID = "GastosYaChannel";
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private double limiteGastos = 50000.0;
 
+    @SuppressLint({"ClickableViewAccessibility", "MissingInflatedId"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,8 +93,8 @@ public class MainActivity extends AppCompatActivity {
         Button btnAgregar = findViewById(R.id.btnAgregarGasto);
         ImageButton btnConfig = findViewById(R.id.btnConfig);
 
-        etNombreGasto = findViewById(R.id.etNombreGasto);
-        etCantidadGasto = findViewById(R.id.etCantidadGasto);
+        setNombreGasto = findViewById(R.id.setNombreGasto);
+        setCantidadGasto = findViewById(R.id.setCantidadGasto);
 
         listaGastos = new ArrayList<>();
         RecyclerView recyclerView = findViewById(R.id.recyclerViewGastos);
@@ -119,13 +121,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnAgregar.setOnClickListener(v -> {
-            String nombre = etNombreGasto.getText().toString();
+            String nombre = setNombreGasto.getText().toString();
             double cantidad;
             try {
-                cantidad = Double.parseDouble(etCantidadGasto.getText().toString());
+                cantidad = Double.parseDouble(setCantidadGasto.getText().toString());
                 agregarGasto(nombre, cantidad);
-                etNombreGasto.setText("");
-                etCantidadGasto.setText("");
+                setNombreGasto.setText("");
+                setCantidadGasto.setText("");
             } catch (NumberFormatException e) {
                 Toast.makeText(MainActivity.this, "Por favor ingrese una cantidad válida", Toast.LENGTH_SHORT).show();
             }
@@ -146,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // Método para ocultar el teclado
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         View view = getCurrentFocus();
@@ -208,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void cargarGastosDesdeFirestore() {
         if (mAuth.getCurrentUser() == null) {
             Log.e("GastosYa", "No hay usuario autenticado para cargar gastos");
@@ -266,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void agregarGasto(String nombre, double cantidad) {
         String categoria = spinnerCategoria.getSelectedItem().toString();
         Date fechaActual = new Date();
@@ -326,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void enviarNotificacion(double totalGastos) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        @SuppressLint("DefaultLocale") NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("Límite de gastos superado")
                 .setContentText("Has gastado $" + String.format("%.2f", totalGastos) + ", superando el límite de $" + limiteGastos)
@@ -389,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
                     String[] partes = gastoStr.split(" - ");
                     if (partes.length != 4) {
                         Log.e("GastosYa", "Formato inválido en gastoStr: " + gastoStr);
-                        continue; // Saltar este elemento si el formato es incorrecto
+                        continue;
                     }
                     String id = partes[0];
                     String nombre = partes[1];

@@ -3,7 +3,6 @@ package com.example.gastosya;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -108,7 +107,6 @@ public class SeccionGastoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-    // ViewHolder para los ítems
     public static class GastoViewHolder extends RecyclerView.ViewHolder {
         TextView tvNombre, tvCantidad;
         ImageView imgCategoria;
