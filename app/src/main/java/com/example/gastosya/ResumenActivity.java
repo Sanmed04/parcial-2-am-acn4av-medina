@@ -31,14 +31,17 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
+import java.text.ParseException;
+import java.util.Collections;
 
 public class ResumenActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewResumen;
-    private GastoAdapter gastoAdapter;
+    private SeccionGastoAdapter seccionGastoAdapter;
     private PieChart pieChart;
     private TextView tvNoGastos;
     private List<Gasto> gastos = new ArrayList<>();
+    private List<SeccionGastos> seccionesGastos = new ArrayList<>();
     private List<String> categorias;
     private BottomNavigationView bottomNavigationView;
     private TextView tvTotalGastos;
@@ -56,6 +59,7 @@ public class ResumenActivity extends AppCompatActivity {
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         recyclerViewResumen = findViewById(R.id.recyclerViewResumen);
+        recyclerViewResumen.setLayoutManager(new LinearLayoutManager(this));
         pieChart = findViewById(R.id.pieChart);
         tvTotalGastos = findViewById(R.id.tvTotalGastos);
         tvNoGastos = findViewById(R.id.tvNoGastos);
@@ -67,8 +71,9 @@ public class ResumenActivity extends AppCompatActivity {
                 Intent intent = new Intent(ResumenActivity.this, MainActivity.class);
                 ArrayList<String> listaGastosString = new ArrayList<>();
                 for (Gasto gasto : gastos) {
-                    String id = gasto.getId() != null ? gasto.getId() : ""; // Asegurar que id no sea null
-                    listaGastosString.add(id + " - " + gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
+                    String id = gasto.getId() != null ? gasto.getId() : "";
+                    listaGastosString.add(id + " - " + gasto.getNombre() + " - $" + gasto.getCantidad() + " - " +
+                            gasto.getCategoria() + " - " + gasto.getFecha().getTime());
                 }
                 intent.putStringArrayListExtra("listaGastos", listaGastosString);
                 startActivity(intent);
@@ -80,15 +85,6 @@ public class ResumenActivity extends AppCompatActivity {
         });
 
         ArrayList<String> listaGastosString = getIntent().getStringArrayListExtra("listaGastos");
-
-        recyclerViewResumen.setLayoutManager(new LinearLayoutManager(this));
-        gastoAdapter = new GastoAdapter(gastos, new GastoAdapter.OnItemClickListener() {
-            @Override
-            public void onEliminarClick(int position) {
-                eliminarGasto(position);
-            }
-        });
-        recyclerViewResumen.setAdapter(gastoAdapter);
 
         if (listaGastosString == null || listaGastosString.isEmpty()) {
             pieChart.setVisibility(View.GONE);
@@ -102,16 +98,17 @@ public class ResumenActivity extends AppCompatActivity {
             for (String gastoStr : listaGastosString) {
                 try {
                     String[] partes = gastoStr.split(" - ");
-                    if (partes.length != 4) {
+                    if (partes.length != 5) { // Ahora esperamos 5 partes: id - nombre - cantidad - categoría - timestamp
                         Log.e("GastosYa", "Formato inválido en gastoStr: " + gastoStr);
-                        continue; // Saltar este elemento si el formato es incorrecto
+                        continue;
                     }
                     String id = partes[0];
                     String nombre = partes[1];
                     String cantidadStr = partes[2].replace("$", "");
                     double cantidad = Double.parseDouble(cantidadStr);
                     String categoria = partes[3];
-                    Date fecha = new Date();
+                    long timestamp = Long.parseLong(partes[4]);
+                    Date fecha = new Date(timestamp);
                     Gasto gasto = new Gasto(id, nombre, cantidad, categoria, fecha);
                     gastos.add(gasto);
                 } catch (Exception e) {
@@ -119,53 +116,82 @@ public class ResumenActivity extends AppCompatActivity {
                 }
             }
 
+            Collections.sort(gastos, (g1, g2) -> g2.getFecha().compareTo(g1.getFecha()));
+
+            Map<String, List<Gasto>> gastosPorFecha = new HashMap<>();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            for (Gasto gasto : gastos) {
+                String fechaStr = sdf.format(gasto.getFecha());
+                if (!gastosPorFecha.containsKey(fechaStr)) {
+                    gastosPorFecha.put(fechaStr, new ArrayList<>());
+                }
+                gastosPorFecha.get(fechaStr).add(gasto);
+            }
+
+            seccionesGastos.clear();
+            for (Map.Entry<String, List<Gasto>> entry : gastosPorFecha.entrySet()) {
+                try {
+                    Date fecha = sdf.parse(entry.getKey());
+                    seccionesGastos.add(new SeccionGastos(fecha, entry.getValue()));
+                } catch (ParseException e) {
+                    Log.e("GastosYa", "Error parseando fecha: " + entry.getKey());
+                }
+            }
+
+            Collections.sort(seccionesGastos, (s1, s2) -> s2.getFecha().compareTo(s1.getFecha()));
+
+            seccionGastoAdapter = new SeccionGastoAdapter(seccionesGastos, this::eliminarGasto);
+            recyclerViewResumen.setAdapter(seccionGastoAdapter);
+
             mostrarTotalGastos();
             mostrarGraficoPorCategoria();
         }
     }
 
     private void eliminarGasto(int position) {
-        if (position >= 0 && position < gastos.size()) {
-            Gasto gastoEliminado = gastos.get(position);
-            String gastoId = gastoEliminado.getId();
+        if (position >= 0 && position < seccionGastoAdapter.getItemCount()) {
+            Object item = seccionGastoAdapter.getItem(position);
+            if (item instanceof Gasto) {
+                Gasto gastoEliminado = (Gasto) item;
+                String gastoId = gastoEliminado.getId();
 
-            if (gastoId != null && mAuth.getCurrentUser() != null) {
-                String userId = mAuth.getCurrentUser().getUid();
-                db.collection("users").document(userId).collection("gastos").document(gastoId)
-                        .delete()
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("GastosYa", "Gasto eliminado de Firestore con ID: " + gastoId);
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("GastosYa", "Error al eliminar gasto de Firestore: " + e.getMessage());
-                            Toast.makeText(this, "Error al eliminar gasto: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
+                if (gastoId != null && mAuth.getCurrentUser() != null) {
+                    String userId = mAuth.getCurrentUser().getUid();
+                    db.collection("users").document(userId).collection("gastos").document(gastoId)
+                            .delete()
+                            .addOnSuccessListener(aVoid -> Log.d("GastosYa", "Gasto eliminado de Firestore con ID: " + gastoId))
+                            .addOnFailureListener(e -> {
+                                Log.e("GastosYa", "Error al eliminar gasto de Firestore: " + e.getMessage());
+                                Toast.makeText(this, "Error al eliminar gasto: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
+                }
+
+                gastos.remove(gastoEliminado);
+                seccionGastoAdapter.removeItem(position);
+                seccionGastoAdapter.notifyItemRemoved(position);
+                seccionGastoAdapter.notifyItemRangeChanged(position, seccionGastoAdapter.getItemCount());
+
+                if (gastos.isEmpty()) {
+                    pieChart.setVisibility(View.GONE);
+                    tvNoGastos.setVisibility(View.VISIBLE);
+                    tvTotalGastos.setText("Total " + getMesActual() + ": $0.00");
+                } else {
+                    mostrarGraficoPorCategoria();
+                    mostrarTotalGastos();
+                }
+
+                LayoutInflater inflater = getLayoutInflater();
+                View toastLayout = inflater.inflate(R.layout.custom_toast, null);
+                TextView textView = toastLayout.findViewById(R.id.toast_text);
+                textView.setText("Gasto eliminado");
+
+                Toast toast = new Toast(getApplicationContext());
+                toast.setDuration(Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 100);
+                toast.setView(toastLayout);
+                toastLayout.setBackgroundResource(R.drawable.toast_background_delete);
+                toast.show();
             }
-
-            gastos.remove(position);
-            gastoAdapter.notifyItemRemoved(position);
-            gastoAdapter.notifyItemRangeChanged(position, gastos.size());
-
-            if (gastos.isEmpty()) {
-                pieChart.setVisibility(View.GONE);
-                tvNoGastos.setVisibility(View.VISIBLE);
-                tvTotalGastos.setText("Total " + getMesActual() + ": $0.00");
-            } else {
-                mostrarGraficoPorCategoria();
-                mostrarTotalGastos();
-            }
-
-            LayoutInflater inflater = getLayoutInflater();
-            View toastLayout = inflater.inflate(R.layout.custom_toast, null);
-            TextView textView = toastLayout.findViewById(R.id.toast_text);
-            textView.setText("Gasto eliminado");
-
-            Toast toast = new Toast(getApplicationContext());
-            toast.setDuration(Toast.LENGTH_SHORT);
-            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 100);
-            toast.setView(toastLayout);
-            toastLayout.setBackgroundResource(R.drawable.toast_background_delete);
-            toast.show();
         }
     }
 
@@ -232,14 +258,11 @@ public class ResumenActivity extends AppCompatActivity {
                         gastosFiltrados.add(gasto);
                     }
                 }
-
-                gastoAdapter.updateData(gastosFiltrados);
+                // Aquí podrías implementar un filtro en el RecyclerView si lo deseas
             }
 
             @Override
-            public void onNothingSelected() {
-                gastoAdapter.updateData(gastos);
-            }
+            public void onNothingSelected() {}
         });
     }
 

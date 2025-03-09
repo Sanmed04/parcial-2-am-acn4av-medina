@@ -81,10 +81,10 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
 
         public GastoViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvNombreGasto = itemView.findViewById(R.id.tvNombreGasto);
-            tvCantidadGasto = itemView.findViewById(R.id.tvCantidadGasto);
+            tvNombreGasto = itemView.findViewById(R.id.tvNombre);
+            tvCantidadGasto = itemView.findViewById(R.id.tvCantidad);
             imgCategoriaGasto = itemView.findViewById(R.id.imgCategoriaGasto);
-            btnEliminarGasto = itemView.findViewById(R.id.btnEliminarGasto);
+            btnEliminarGasto = itemView.findViewById(R.id.btnEliminar);
         }
     }
 

@@ -78,7 +78,8 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, ResumenActivity.class);
                 ArrayList<String> listaGastosString = new ArrayList<>();
                 for (Gasto gasto : listaGastos) {
-                    listaGastosString.add(gasto.getId() + " - " + gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria());
+                    String entry = gasto.getId() + " - " + gasto.getNombre() + " - $" + gasto.getCantidad() + " - " + gasto.getCategoria() + " - " + gasto.getFecha().getTime();
+                    listaGastosString.add(entry);
                 }
                 intent.putStringArrayListExtra("listaGastos", listaGastosString);
                 startActivity(intent);
