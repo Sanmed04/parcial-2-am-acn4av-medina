@@ -107,11 +107,11 @@ public class ResumenActivity extends AppCompatActivity {
             pieChart.setVisibility(View.VISIBLE);
             tvNoGastos.setVisibility(View.GONE);
 
-            gastos.clear(); // Limpiar la lista antes de cargar nuevos datos
+            gastos.clear();
             for (String gastoStr : listaGastosString) {
                 try {
                     String[] partes = gastoStr.split(" - ");
-                    if (partes.length != 5) { // Ahora esperamos 5 partes: id - nombre - cantidad - categoría - timestamp
+                    if (partes.length != 5) {
                         Log.e("GastosYa", "Formato inválido en gastoStr: " + gastoStr);
                         continue;
                     }
@@ -259,16 +259,21 @@ public class ResumenActivity extends AppCompatActivity {
             public void onValueSelected(com.github.mikephil.charting.data.Entry e, Highlight h) {
                 int index = (int) h.getX();
                 String categoriaSeleccionada = categorias.get(index);
+
                 List<Gasto> gastosFiltrados = new ArrayList<>();
                 for (Gasto gasto : gastos) {
                     if (gasto.getCategoria().equals(categoriaSeleccionada)) {
                         gastosFiltrados.add(gasto);
                     }
                 }
+
+                actualizarListaFiltrada(gastosFiltrados);
             }
 
             @Override
-            public void onNothingSelected() {}
+            public void onNothingSelected() {
+                actualizarListaCompleta();
+            }
         });
     }
 
@@ -279,6 +284,60 @@ public class ResumenActivity extends AppCompatActivity {
         }
 
         tvTotalGastos.setText("Total " + getMesActual() + ": $" + String.format(Locale.getDefault(), "%.2f", totalGastos));
+    }
+
+    private void actualizarListaFiltrada(List<Gasto> gastosFiltrados) {
+        Map<String, List<Gasto>> gastosPorFecha = new HashMap<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        for (Gasto gasto : gastosFiltrados) {
+            String fechaStr = sdf.format(gasto.getFecha());
+            if (!gastosPorFecha.containsKey(fechaStr)) {
+                gastosPorFecha.put(fechaStr, new ArrayList<>());
+            }
+            gastosPorFecha.get(fechaStr).add(gasto);
+        }
+
+        List<SeccionGastos> seccionesFiltradas = new ArrayList<>();
+        for (Map.Entry<String, List<Gasto>> entry : gastosPorFecha.entrySet()) {
+            try {
+                Date fecha = sdf.parse(entry.getKey());
+                seccionesFiltradas.add(new SeccionGastos(fecha, entry.getValue()));
+            } catch (ParseException e) {
+                Log.e("GastosYa", "Error parseando fecha: " + entry.getKey());
+            }
+        }
+
+        Collections.sort(seccionesFiltradas, (s1, s2) -> s2.getFecha().compareTo(s1.getFecha()));
+
+        seccionGastoAdapter = new SeccionGastoAdapter(seccionesFiltradas, this::eliminarGasto);
+        recyclerViewResumen.setAdapter(seccionGastoAdapter);
+    }
+
+    private void actualizarListaCompleta() {
+        Map<String, List<Gasto>> gastosPorFecha = new HashMap<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        for (Gasto gasto : gastos) {
+            String fechaStr = sdf.format(gasto.getFecha());
+            if (!gastosPorFecha.containsKey(fechaStr)) {
+                gastosPorFecha.put(fechaStr, new ArrayList<>());
+            }
+            gastosPorFecha.get(fechaStr).add(gasto);
+        }
+
+        seccionesGastos.clear();
+        for (Map.Entry<String, List<Gasto>> entry : gastosPorFecha.entrySet()) {
+            try {
+                Date fecha = sdf.parse(entry.getKey());
+                seccionesGastos.add(new SeccionGastos(fecha, entry.getValue()));
+            } catch (ParseException e) {
+                Log.e("GastosYa", "Error parseando fecha: " + entry.getKey());
+            }
+        }
+
+        Collections.sort(seccionesGastos, (s1, s2) -> s2.getFecha().compareTo(s1.getFecha()));
+
+        seccionGastoAdapter = new SeccionGastoAdapter(seccionesGastos, this::eliminarGasto);
+        recyclerViewResumen.setAdapter(seccionGastoAdapter);
     }
 
     private String getMesActual() {

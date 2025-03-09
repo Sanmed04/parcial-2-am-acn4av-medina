@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int NOTIFICATION_ID = 1;
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
-    private double limiteGastos = 500.0;
+    private double limiteGastos = 50000.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
