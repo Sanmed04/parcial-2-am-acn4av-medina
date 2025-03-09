@@ -15,4 +15,15 @@
     <color name="colorBg">#EE4E4E</color>
     <color name="colorTen">#444444</color>
     <color name="colorEleven">#A6271B</color>
+
+    <color name="servicio_color">#FF5722</color>
+    <color name="compra_color">#4CAF50</color>
+    <color name="transaccion_color">#2196F3</color>
+    <color name="alimentacion_color">#F44336</color>
+    <color name="salud_color">#9C27B0</color>
+    <color name="entretenimiento_color">#FFC107</color>
+    <color name="transporte_color">#3F51B5</color>
+    <color name="vivienda_color">#E91E63</color>
+    <color name="educacion_color">#009688</color>
+    <color name="default_color">#757575</color>
 </resources>

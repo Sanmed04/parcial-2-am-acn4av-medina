@@ -3,6 +3,7 @@ package com.example.gastosya;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.github.mikephil.charting.charts.PieChart;
@@ -48,11 +49,23 @@ public class ResumenActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
 
+    private final Map<String, Integer> categoriaColorMap = new HashMap<>();
+
     @SuppressLint("NonConstantResourceId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_resumen);
+
+        categoriaColorMap.put("Servicio", R.color.servicio_color);
+        categoriaColorMap.put("Compra", R.color.compra_color);
+        categoriaColorMap.put("Transaccion", R.color.transaccion_color);
+        categoriaColorMap.put("Alimentacion", R.color.alimentacion_color);
+        categoriaColorMap.put("Salud", R.color.salud_color);
+        categoriaColorMap.put("Entretenimiento", R.color.entretenimiento_color);
+        categoriaColorMap.put("Transporte", R.color.transporte_color);
+        categoriaColorMap.put("Vivienda", R.color.vivienda_color);
+        categoriaColorMap.put("Educacion", R.color.educacion_color);
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -205,6 +218,7 @@ public class ResumenActivity extends AppCompatActivity {
         }
 
         List<PieEntry> entries = new ArrayList<>();
+        List<Integer> colors = new ArrayList<>();
         categorias = new ArrayList<>();
 
         for (Map.Entry<String, Double> entry : gastosPorCategoria.entrySet()) {
@@ -212,33 +226,27 @@ public class ResumenActivity extends AppCompatActivity {
             double total = entry.getValue();
             entries.add(new PieEntry((float) total));
             categorias.add(categoria);
+
+            // Depuración
+            Log.d("GastosYa", "Categoría procesada: " + categoria);
+
+            Integer color = categoriaColorMap.get(categoria);
+            if (color != null) {
+                colors.add(ContextCompat.getColor(this, color));
+                Log.d("GastosYa", "Color encontrado para " + categoria + ": " + color);
+            } else {
+                colors.add(ContextCompat.getColor(this, R.color.default_color));
+                Log.w("GastosYa", "No se encontró color para " + categoria + ", usando default_color");
+            }
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
-        dataSet.setColors(new int[]{
-                getColor(R.color.colorOne),
-                getColor(R.color.colorTwo),
-                getColor(R.color.colorThree),
-                getColor(R.color.colorFour),
-                getColor(R.color.colorFive),
-                getColor(R.color.colorSix),
-                getColor(R.color.colorSeven),
-                getColor(R.color.colorEight),
-                getColor(R.color.colorNine),
-        });
-
+        dataSet.setColors(colors);
         dataSet.setValueTextSize(16f);
-
-        dataSet.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                return String.format(Locale.getDefault(), "%.1f%%", value);
-            }
-        });
-
+        dataSet.setDrawValues(false);
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
-        pieChart.setUsePercentValues(true);
+        pieChart.setUsePercentValues(false);
         pieChart.getDescription().setEnabled(false);
 
         Legend legend = pieChart.getLegend();
@@ -251,14 +259,12 @@ public class ResumenActivity extends AppCompatActivity {
             public void onValueSelected(com.github.mikephil.charting.data.Entry e, Highlight h) {
                 int index = (int) h.getX();
                 String categoriaSeleccionada = categorias.get(index);
-
                 List<Gasto> gastosFiltrados = new ArrayList<>();
                 for (Gasto gasto : gastos) {
                     if (gasto.getCategoria().equals(categoriaSeleccionada)) {
                         gastosFiltrados.add(gasto);
                     }
                 }
-                // Aquí podrías implementar un filtro en el RecyclerView si lo deseas
             }
 
             @Override

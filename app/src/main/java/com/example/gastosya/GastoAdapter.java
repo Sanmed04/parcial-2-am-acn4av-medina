@@ -19,6 +19,7 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
     private List<Gasto> gastos;
     private final Map<String, Integer> categoriaIconoMap;
     private final OnItemClickListener onItemClickListener;
+    private final Map<String, Integer> categoriaColorMap;
 
     public GastoAdapter(List<Gasto> gastos, OnItemClickListener onItemClickListener) {
         this.gastos = gastos;
@@ -34,6 +35,17 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         categoriaIconoMap.put("Transporte", R.drawable.baseline_directions_transit_24);
         categoriaIconoMap.put("Vivienda", R.drawable.baseline_house_24);
         categoriaIconoMap.put("Educacion", R.drawable.baseline_school_24);
+
+        categoriaColorMap = new HashMap<>();
+        categoriaColorMap.put("Servicio", R.color.servicio_color);
+        categoriaColorMap.put("Compra", R.color.compra_color);
+        categoriaColorMap.put("Transaccion", R.color.transaccion_color);
+        categoriaColorMap.put("Alimentacion", R.color.alimentacion_color);
+        categoriaColorMap.put("Salud", R.color.salud_color);
+        categoriaColorMap.put("Entretenimiento", R.color.entretenimiento_color);
+        categoriaColorMap.put("Transporte", R.color.transporte_color);
+        categoriaColorMap.put("Vivienda", R.color.vivienda_color);
+        categoriaColorMap.put("Educacion", R.color.educacion_color);
     }
 
     public void updateData(List<Gasto> nuevosGastos) {
@@ -62,6 +74,15 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
             holder.imgCategoriaGasto.setImageResource(R.drawable.predeterminado);
         }
 
+        Integer color = categoriaColorMap.get(gasto.getCategoria());
+        if (color != null) {
+            holder.circleCategoria.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    holder.itemView.getContext().getResources().getColor(color, null)));
+        } else {
+            holder.circleCategoria.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    holder.itemView.getContext().getResources().getColor(R.color.default_color, null)));
+        }
+
         holder.btnEliminarGasto.setOnClickListener(v -> {
             if (onItemClickListener != null) {
                 onItemClickListener.onEliminarClick(position);
@@ -78,12 +99,14 @@ public class GastoAdapter extends RecyclerView.Adapter<GastoAdapter.GastoViewHol
         TextView tvNombreGasto, tvCantidadGasto;
         ImageView imgCategoriaGasto;
         ImageButton btnEliminarGasto;
+        View circleCategoria;
 
         public GastoViewHolder(@NonNull View itemView) {
             super(itemView);
             tvNombreGasto = itemView.findViewById(R.id.tvNombre);
             tvCantidadGasto = itemView.findViewById(R.id.tvCantidad);
             imgCategoriaGasto = itemView.findViewById(R.id.imgCategoriaGasto);
+            circleCategoria = itemView.findViewById(R.id.circleCategoria);
             btnEliminarGasto = itemView.findViewById(R.id.btnEliminar);
         }
     }

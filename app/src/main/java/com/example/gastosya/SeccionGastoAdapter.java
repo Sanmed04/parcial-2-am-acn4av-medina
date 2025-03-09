@@ -112,6 +112,7 @@ public class SeccionGastoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public static class GastoViewHolder extends RecyclerView.ViewHolder {
         TextView tvNombre, tvCantidad;
         ImageView imgCategoria;
+        View circleCategoria;
         ImageButton btnEliminar;
 
         public GastoViewHolder(View itemView) {
@@ -119,6 +120,7 @@ public class SeccionGastoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             tvNombre = itemView.findViewById(R.id.tvNombre);
             tvCantidad = itemView.findViewById(R.id.tvCantidad);
             imgCategoria = itemView.findViewById(R.id.imgCategoriaGasto);
+            circleCategoria = itemView.findViewById(R.id.circleCategoria);
             btnEliminar = itemView.findViewById(R.id.btnEliminar);
         }
 
@@ -137,11 +139,31 @@ public class SeccionGastoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             categoriaIconoMap.put("Vivienda", R.drawable.baseline_house_24);
             categoriaIconoMap.put("Educacion", R.drawable.baseline_school_24);
 
+            Map<String, Integer> categoriaColorMap = new HashMap<>();
+            categoriaColorMap.put("Servicio", R.color.servicio_color);
+            categoriaColorMap.put("Compra", R.color.compra_color);
+            categoriaColorMap.put("Transaccion", R.color.transaccion_color);
+            categoriaColorMap.put("Alimentacion", R.color.alimentacion_color);
+            categoriaColorMap.put("Salud", R.color.salud_color);
+            categoriaColorMap.put("Entretenimiento", R.color.entretenimiento_color);
+            categoriaColorMap.put("Transporte", R.color.transporte_color);
+            categoriaColorMap.put("Vivienda", R.color.vivienda_color);
+            categoriaColorMap.put("Educacion", R.color.educacion_color);
+
             Integer icono = categoriaIconoMap.get(gasto.getCategoria());
             if (icono != null) {
                 imgCategoria.setImageResource(icono);
             } else {
                 imgCategoria.setImageResource(R.drawable.predeterminado);
+            }
+
+            Integer color = categoriaColorMap.get(gasto.getCategoria());
+            if (color != null) {
+                circleCategoria.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        itemView.getContext().getResources().getColor(color, null)));
+            } else {
+                circleCategoria.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        itemView.getContext().getResources().getColor(R.color.default_color, null)));
             }
 
             if (btnEliminar != null) {
